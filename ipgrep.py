@@ -1,5 +1,6 @@
 #! /usr/bin/env python3
 
+import argparse
 import csv
 import fileinput
 import json
@@ -55,9 +56,16 @@ class ResolverResponse(object):
 
 
 class Resolver(object):
-    def __init__(self, flags=pycares.ARES_FLAG_NOSEARCH,
-                 timeout=5.0, tries=2):
-        self.channel = pycares.Channel(flags, timeout, tries)
+    """name resolver, ignores locally configured search domains"""
+    def __init__(self, timeout, tries, servers=None):
+        flags = pycares.ARES_FLAG_NOSEARCH
+        timeout = float(timeout)
+        tries = int(tries)
+        if servers:
+            self.channel = pycares.Channel(flags, timeout, tries,
+                                           servers=servers)
+        else:
+            self.channel = pycares.Channel(flags, timeout, tries)
 
     def _wait(self):
         while True:
@@ -109,12 +117,22 @@ class Extractor(object):
 
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description='Process some integers.')
+    parser.add_argument('--timeout', default=5.0,
+                        help='seconds each name server is given to respond to a query')
+    parser.add_argument('--tries', default=4,
+                        help='times the resolver will try contacting each name server')
+    parser.add_argument('--servers', default='',
+                        help='comma-separated list of nameservers used to do the lookups')
+    parser.add_argument('files', metavar='FILE', nargs='*', help='files to grep (default: stdin)')
+    args = parser.parse_args()
+
     ip_lookup = IPLookup()
-    resolver = Resolver()
+    resolver = Resolver(args.timeout, args.tries, args.servers.split(','))
     csvw = csv.writer(sys.stdout, delimiter="\t")
     names, ips = set(), set()
 
-    for line in fileinput.input(mode='rb'):
+    for line in fileinput.input(files=args.files, mode='rb'):
         extractor = Extractor(line)
         names = names | set(extractor.extract_names())
         ips = ips | set(extractor.extract_ips())

@@ -29,3 +29,29 @@ Dependencies:
 ```bash
 $ pip install pycares
 ```
+
+
+Ensuring complete results
+-------------------------
+
+By default, speed of execution is prioritized over completeness: by
+default, each query will timeout after 5 seconds and will only be
+retried once.  If completeness is more important, then use the command
+line flags to increase those values.
+
+
+
+Speeding up large runs
+----------------------
+
+Large amounts of DNS queries can take a long time to resolve.
+`ipgrep` already uses asynchronous DNS to help with that.  When
+running `ipgrep` on many files, then things can be sped up by an order
+of magnitude by running a local caching recursive resolver like
+[unbound](https://www.unbound.org/).
+
+On a Debian-ish machine, that means just:
+
+```console
+$ sudo apt-get install unbound
+```
