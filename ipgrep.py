@@ -55,8 +55,9 @@ class ResolverResponse(object):
 
 
 class Resolver(object):
-    def __init__(self):
-        self.channel = pycares.Channel(timeout=5.0, tries=2)
+    def __init__(self, flags=pycares.ARES_FLAG_NOSEARCH,
+                 timeout=5.0, tries=2):
+        self.channel = pycares.Channel(flags, timeout, tries)
 
     def _wait(self):
         while True:
